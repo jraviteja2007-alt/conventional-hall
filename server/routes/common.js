@@ -21,4 +21,12 @@ export const page = (req, def = 20, max = 200) => {
 };
 export const like = (q) => `%${String(q).replace(/[%_\\]/g, '\\$&')}%`;
 export const idParam = (req) => { const id = Number(req.params.id); if (!Number.isInteger(id) || id < 1) throw new ApiError(404, 'NOT_FOUND', 'Not found'); return id; };
-export const publicUser = (u) => ({ id: u.id, name: u.name, email: u.email, phone: u.phone, role: u.role, saved_details: u.saved_details ? JSON.parse(u.saved_details) : null });
+export const publicUser = (u) => ({
+  id: u.id,
+  name: u.name,
+  email: u.email,
+  phone: u.phone,
+  role: u.role,
+  staff: u.role !== 'customer',
+  saved_details: u.saved_details ? JSON.parse(u.saved_details) : null,
+});

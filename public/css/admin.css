@@ -38,6 +38,10 @@ p { margin: 0 0 .6em; } code, .mono { font-family: ui-monospace, SFMono-Regular,
 .login-card { width: min(420px, 100%); background: linear-gradient(160deg, var(--surface-2), var(--surface)); border: 1px solid var(--line-2); border-radius: 22px; padding: 34px 30px; box-shadow: var(--sh-2); transform: rotateX(2deg); transform-style: preserve-3d; }
 .login-card .logo { width: 52px; height: 52px; border-radius: 14px; display: grid; place-items: center; font: 700 1.5rem Georgia, serif; color: var(--brand-ink); background: linear-gradient(135deg, #e6c16b, var(--brand-d)); box-shadow: 0 10px 24px -6px rgba(201,162,75,.5); margin-bottom: 18px; }
 .login-card h1 { margin-bottom: 4px; } .login-card .field { margin-top: 14px; }
+@media (max-width: 480px) {
+  .login-wrap { padding: 16px; perspective: none; }
+  .login-card { padding: 26px 18px; border-radius: 18px; transform: none; }
+}
 
 /* ---------- shell ---------- */
 .shell { display: grid; grid-template-columns: var(--side-w) minmax(0, 1fr); min-height: 100vh; }

@@ -62,11 +62,11 @@ function showLogin(msg = '') {
   form.addEventListener('submit', async (e) => {
     e.preventDefault(); const { out } = collect(form, [{ name: 'email' }, { name: 'password', type: 'text' }]); const btn = $('button', form);
     const errs = {}; if (!/^\S+@\S+\.\S+$/.test(out.email || '')) errs.email = 'Enter your email'; if (!out.password) errs.password = 'Enter your password';
-    if (showFieldErrors(form, errs)) return;
     btn.classList.add('is-loading');
     try {
       const r = await A.post('/api/auth/login', out);
-      if (!r.user.staff) { await A.post('/api/auth/logout').catch(() => {}); throw new Error('This account does not have admin access.'); }
+      const isStaff = r.user && (r.user.staff || (r.user.role && r.user.role !== 'customer'));
+      if (!isStaff) { await A.post('/api/auth/logout').catch(() => {}); throw new Error('This account does not have admin access.'); }
       state.user = r.user; await enter();
     } catch (err) { btn.classList.remove('is-loading'); if (err.details) showFieldErrors(form, err.details); toast(err.message, 'err'); }
   });
@@ -154,8 +154,8 @@ async function enter() {
 (async function init() {
   try {
     const [me, cfg] = await Promise.all([A.get('/api/auth/me'), A.get('/api/config').catch(() => ({ settings: {} }))]);
-    state.config = cfg.settings || {};
-    if (me.user?.staff) { state.user = me.user; await enter(); } else showLogin();
+    const isStaff = me.user && (me.user.staff || (me.user.role && me.user.role !== 'customer'));
+    if (isStaff) { state.user = me.user; await enter(); } else showLogin();
   } catch (e) { setHTML(app, errBlock(e.message)); $('[data-retry]', app)?.addEventListener('click', () => location.reload()); }
 })();
 export { on, esc, raw, bindUploads };

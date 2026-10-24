@@ -12,7 +12,8 @@ export function passwordToggle(root) {
 
 export default async function login(ctx) {
   ctx.meta('Sign in', 'Sign in to manage your bookings.');
-  if (S.user) { ctx.navigate(S.user.staff ? '/account' : safeNext(ctx.query.next), { replace: true }); return; }
+  const isStaff = S.user && (S.user.staff || (S.user.role && S.user.role !== 'customer'));
+  if (S.user) { if (isStaff) location.assign('/admin'); else ctx.navigate(safeNext(ctx.query.next), { replace: true }); return; }
   const next = ctx.query.next ? `?next=${encodeURIComponent(ctx.query.next)}` : '';
   setHTML(ctx.el, html`<section class="section page-top"><div class="container" style="max-width:480px">
     <div class="card pad"><h1 style="font-size:2rem">Welcome back</h1><p class="muted">Sign in to view bookings, payments and documents.</p>
