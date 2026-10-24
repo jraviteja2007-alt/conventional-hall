@@ -1,0 +1,15 @@
+/* Worker B pages: gallery, packages, availability, contact, legal, auth */
+.g-item.gv { aspect-ratio: 16/9; }
+.g-item.gv img { height: 100%; }
+.g-item .play { position: absolute; inset: 0; display: grid; place-items: center; font-size: 2rem; color: #fff; text-shadow: 0 2px 12px rgba(0,0,0,.5); pointer-events: none; }
+.contact-cards .card { text-align: left; }
+.contact-cards .ico { width: 44px; height: 44px; display: grid; place-items: center; border-radius: 12px; background: var(--primary-l); color: var(--primary); margin-bottom: 10px; }
+.contact-cards .ico svg { width: 22px; height: 22px; }
+.prose table { margin: 1em 0; }
+#pk-cmp .tbl th[scope=row] { font-weight: 600; white-space: nowrap; }
+#pk-cmp .table-wrap { margin-top: 12px; }
+#rec-form .qb-res { margin-top: 10px; }
+.alert[hidden] { display: none; }
+/* Default size for inline icons (app.css only sizes them inside specific components). Zero specificity so any component rule wins. */
+:where(svg[viewBox="0 0 24 24"][aria-hidden="true"]) { width: 1.15em; height: 1.15em; flex: none; }
+:where(.alert) > :where(svg) { width: 22px; height: 22px; margin-top: 2px; }

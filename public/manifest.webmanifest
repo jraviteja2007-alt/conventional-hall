@@ -1,0 +1,11 @@
+{
+  "name": "Convention Hall",
+  "short_name": "Hall",
+  "description": "Explore, check availability and book the convention hall online.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#1c1a24",
+  "theme_color": "#6b1e2e",
+  "icons": [{ "src": "/favicon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }]
+}

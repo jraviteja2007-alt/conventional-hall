@@ -1,0 +1,6 @@
+.env
+data/*.db*
+node_modules
+uploads/*
+!uploads/.gitkeep
+backups/
