@@ -1,8 +1,8 @@
-import { html, setHTML, $, $$, icon, inr, num, img, fmtDate, fmtTime, toast, track, openLightbox, showFieldErrors, todayISO } from '../ui.js';
+import { html, setHTML, $, icon, inr, num, img, openLightbox } from '../ui.js';
 import { S } from '../store.js';
-import { get, post } from '../api.js';
+import { get } from '../api.js';
 import { sectionHead, facilityCard, eventCard, packageCard, reviewCard, hallCard, waLink, telLink, mapsDir, mapsEmbed, mapsNear } from '../components.js';
-import { mountCoverflow, nextDays, qsOf } from '../helpers.js';
+import { mountCoverflow } from '../helpers.js';
 import { CONVENTION_SPACES, IMG } from '../images.js';
 
 export default async function home(ctx) {
@@ -72,18 +72,6 @@ export default async function home(ctx) {
           <div class="hero-float f2" aria-hidden="true"><b>100% AC</b>central chilled cooling</div>
         </div>
       </div>
-      <form class="qb" id="qb" novalidate aria-labelledby="qb-t">
-        <h2 id="qb-t">${icon('calendar')} Check availability &amp; price</h2>
-        <div class="qb-grid">
-          <div class="field"><label for="qb-event">Event type</label><select class="input" id="qb-event" name="event">${S.events.map((e) => html`<option value="${e.slug}">${e.name}</option>`)}</select></div>
-          <div class="field"><label for="qb-date">Date</label><input class="input" id="qb-date" name="date" type="date" min="${todayISO()}" value="${nextDays(21)}" required></div>
-          <div class="field"><label for="qb-start">From</label><input class="input" id="qb-start" name="start" type="time" value="10:00" required></div>
-          <div class="field"><label for="qb-end">To</label><input class="input" id="qb-end" name="end" type="time" value="18:00" required></div>
-          <div class="field"><label for="qb-guests">Guests</label><input class="input" id="qb-guests" name="guests" type="number" min="1" max="20000" value="500" inputmode="numeric" required></div>
-          <button class="btn lg" type="submit">Check now</button>
-        </div>
-        <div class="qb-result" id="qb-result" aria-live="polite"></div>
-      </form>
     </div>
   </section>
 
@@ -186,63 +174,5 @@ export default async function home(ctx) {
     });
     ctx.onCleanup(() => off?.());
   }
-
-  /* ---- Quick Booking Widget ---- */
-  const form = $('#qb');
-  const out = $('#qb-result');
-  form?.addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const f = Object.fromEntries(new FormData(form));
-    const errs = {};
-    if (!f.date || f.date < todayISO()) errs.date = 'Choose a future date';
-    if (!f.start) errs.start = 'Required';
-    if (!f.end || f.end <= f.start) errs.end = 'End after start';
-    const guests = Number(f.guests);
-    if (!guests || guests < 1) errs.guests = 'Required';
-    if (showFieldErrors(form, errs)) return;
-
-    const btn = $('[type=submit]', form);
-    btn?.classList.add('is-loading');
-    track('availability_check');
-    setHTML(out, html`<div class="skeleton" style="height:64px"></div>`);
-
-    const rows = await Promise.all(
-      halls.map(async (h) => {
-        if (guests > h.max_guests) return { h, state: 'cap', msg: `Holds up to ${num(h.max_guests)} guests` };
-        if (guests < h.min_guests) return { h, state: 'min', msg: `Best for ${num(h.min_guests)}+ guests` };
-        try {
-          const [av, q] = await Promise.all([
-            get(`/api/availability/check${qsOf({ hall: h.id, date: f.date, start: f.start, end: f.end })}`),
-            post('/api/pricing/quote', { hallId: h.id, date: f.date, start: f.start, end: f.end, guests }).catch((x) => ({ err: x.message })),
-          ]);
-          return { h, state: av.available ? 'ok' : 'no', av, q: q.quote, err: q.err };
-        } catch (x) {
-          return { h, state: 'err', msg: x.message };
-        }
-      })
-    );
-
-    btn?.classList.remove('is-loading');
-    const link = (h) => `/book${qsOf({ event: f.event, hall: h.id, date: f.date, start: f.start, end: f.end, guests })}`;
-
-    setHTML(
-      out,
-      html`<p class="caption" style="margin:0">${fmtDate(f.date)} · ${fmtTime(f.start)} – ${fmtTime(f.end)} · ${num(guests)} guests</p>
-      ${rows.map((r) => html`
-        <div class="qb-res ${r.state === 'ok' ? 'ok' : 'no'}">
-          <div>
-            <b>${r.h.name}</b>
-            <div class="caption">${r.state === 'ok' ? (r.q ? `Estimated ${inr(r.q.total)} incl. GST (hall only, before add-ons)` : r.err || '') : r.state === 'no' ? 'Not available for these hours. Try another slot or hall.' : r.msg}</div>
-          </div>
-          <div class="row">
-            ${r.state === 'ok'
-              ? html`<span class="badge success">${icon('check')} Available${r.av.pendingRequests ? ' · requests pending' : ''}</span><a class="btn sm" href="${link(r.h)}" data-track="book_click">Book this hall</a>`
-              : r.state === 'no'
-              ? html`<span class="badge error">Booked</span><a class="btn sm ghost" href="/availability?hall=${r.h.id}&date=${f.date}">See other dates</a>`
-              : html`<span class="badge neutral">Not suitable</span>`}
-          </div>
-        </div>
-      `)}`
-    );
-  });
 }
+

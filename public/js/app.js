@@ -1,4 +1,4 @@
-// Application shell: boots data, renders header / drawer / footer / floating actions / assistant / cookie banner / global search,
+// Application shell: boots data, renders header / drawer / footer / floating actions / assistant / cookie banner,
 // registers lazy page routes and starts the router.
 import { boot, S, onAuth, setUser } from './store.js';
 import { route, start, navigate } from './router.js';
@@ -15,7 +15,7 @@ const ls = { get(k) { try { return localStorage.getItem(k); } catch { return nul
 const page = (name) => () => import(`./pages/${name}.js`);
 [
   ['/', 'home'], ['/about', 'about'], ['/halls', 'halls'], ['/halls/:slug', 'hall'], ['/compare', 'compare'], ['/gallery', 'gallery'], ['/facilities', 'facilities'],
-  ['/packages', 'packages'], ['/events', 'events'], ['/availability', 'availability'], ['/contact', 'contact'], ['/search', 'search'],
+  ['/packages', 'packages'], ['/events', 'events'], ['/availability', 'availability'], ['/contact', 'contact'],
   ['/book', 'book'], ['/book/pay/:ref', 'pay'], ['/book/done/:ref', 'done'], ['/booking', 'booking'], ['/booking/:ref', 'booking'],
   ['/login', 'login'], ['/register', 'register'], ['/account', 'account'],
   ['/privacy-policy', 'legal'], ['/terms', 'legal'], ['/cancellation-policy', 'legal'], ['/refund-policy', 'legal'], ['/cookie-policy', 'legal'],
@@ -35,7 +35,6 @@ function renderHeader() {
   setHTML($('#hdr'), html`<div class="container">${brandHTML()}
     <nav class="nav" aria-label="Primary">${NAV.map(([h, l]) => html`<a href="${h}">${l}</a>`)}</nav>
     <div class="hdr-actions">
-      <button type="button" class="icon-btn" data-act="search" aria-label="Search the site" aria-haspopup="dialog">${icon('search')}</button>
       ${accountLink('login-link hdr-link')}
       <a class="btn gold sm" href="/book" data-track="book_click">Book Now</a>
       <button type="button" class="burger" data-act="menu" aria-label="Open menu" aria-expanded="false" aria-controls="drawer">${icon('menu')}</button>
@@ -59,9 +58,10 @@ function menu(open) {
   if (open) $('#drawer-nav a, #drawer-nav button')?.focus(); else $('[data-act="menu"]')?.focus({ preventScroll: true });
 }
 
+/* ------------------------------------------------------------------ footer */
 function renderFooter() {
-  const s = S.site; const soc = s.social || {};
-  const socials = [['facebook', 'Facebook', 'f'], ['instagram', 'Instagram', 'in'], ['youtube', 'YouTube', '▶']].filter(([k]) => soc[k]);
+  const s = S.site, soc = S.cfg.social || {};
+  const socials = [['facebook', 'Facebook', icon('facebook')], ['instagram', 'Instagram', icon('instagram')], ['youtube', 'YouTube', icon('youtube')]].filter(([k]) => soc[k]);
   setHTML($('#ftr'), html`<div class="container">
     <div class="footer-grid">
       <div><div class="brand" style="color:#fff;margin-bottom:14px"><span class="brand-mark" aria-hidden="true">${String(s.name || 'H')[0]}</span><span class="brand-name">${s.name}</span></div>
@@ -84,7 +84,7 @@ function renderFooter() {
     <a class="btn gold" href="/book" data-track="book_click">Book</a>`);
 }
 
-/* ------------------------------------------------------------------ extras: WhatsApp float, assistant, cookie, search */
+/* ------------------------------------------------------------------ extras: WhatsApp float & Chatbot */
 function renderExtras() {
   const ex = $('#extras');
   setHTML(ex, html`
@@ -97,9 +97,7 @@ function renderExtras() {
       <form id="chat-form" autocomplete="off"><label class="sr-only" for="chat-in">Your question</label><input class="input" id="chat-in" maxlength="500" placeholder="Ask about dates, prices, parking…" required><button class="btn sm" type="submit">Send</button></form>
     </section>
     <div class="cookie" id="cookie" role="region" aria-label="Cookie notice"><p>We use essential cookies to make booking work and, with your consent, anonymous analytics to improve the site. See our <a href="/cookie-policy">Cookie Policy</a>.</p><div class="row"><button type="button" class="btn sm ghost-light" data-cookie="essential">Essential only</button><button type="button" class="btn gold sm" data-cookie="all">Accept all</button></div></div>
-    <div class="search-pop" id="search-pop" role="dialog" aria-modal="true" aria-label="Search" hidden>
-      <div class="sp-box"><form role="search" id="sp-form"><label class="sr-only" for="sp-in">Search halls, packages, facilities and events</label>${icon('search')}<input id="sp-in" type="search" placeholder="Search halls, packages, facilities, events…" autocomplete="off" maxlength="60"><button type="button" class="icon-btn dark" data-act="search-close" aria-label="Close search">${icon('x')}</button></form>
-      <div class="sp-res" id="sp-res" aria-live="polite"><p class="muted" style="padding:18px">Type to search, or press Enter for the full results page.</p></div></div></div>`);
+  `);
   if (!ls.get('ch_cookie')) setTimeout(() => $('#cookie')?.classList.add('show'), 1200); else if (ls.get('ch_cookie') === 'all') loadAnalytics();
 }
 
@@ -135,24 +133,6 @@ function loadAnalytics() {
   }
 }
 
-/* ---- global search ---- */
-let spLast = null;
-function searchOpen() { const p = $('#search-pop'); p.hidden = false; spLast = document.activeElement; $('#sp-in').focus(); document.body.style.overflow = 'hidden'; }
-function searchClose() { const p = $('#search-pop'); if (p.hidden) return; p.hidden = true; document.body.style.overflow = ''; spLast?.focus?.(); }
-const runSearch = debounce(async (q) => {
-  const box = $('#sp-res'); if (q.length < 2) { setHTML(box, html`<p class="muted" style="padding:18px">Type at least 2 letters…</p>`); return; }
-  try {
-    const r = await get(`/api/search${qs({ q })}`); const groups = [
-      ['Halls', r.halls.map((h) => [`/halls/${h.slug}`, h.name, `Up to ${num(h.max_guests)} guests`])],
-      ['Packages', r.packages.map((p) => ['/packages', p.name, p.price ? `From ${inr(p.price)}` : 'Custom quote'])],
-      ['Facilities', r.facilities.map((f) => ['/facilities', f.name, (f.description || '').slice(0, 70)])],
-      ['Events', r.events.map((e) => [`/book?event=${e.slug}`, e.name, 'Book this event'])],
-    ].filter(([, l]) => l.length);
-    if (!groups.length) { setHTML(box, html`<p style="padding:18px">No results for “${q}”. Try “wedding”, “parking” or “AC”.</p>`); return; }
-    setHTML(box, html`${groups.map(([t, l]) => html`<div class="sp-group"><h3>${t}</h3>${l.slice(0, 5).map(([h, n, d]) => html`<a href="${h}" class="sp-item"><b>${n}</b><span>${d}</span></a>`)}</div>`)}<a class="sp-all" href="/search?q=${encodeURIComponent(q)}">See all results for “${q}”</a>`);
-  } catch (e) { setHTML(box, html`<p class="alert err" style="margin:14px">${e.message}</p>`); }
-}, 250);
-
 /* ------------------------------------------------------------------ wiring */
 function wire() {
   document.addEventListener('click', (e) => {
@@ -160,18 +140,13 @@ function wire() {
     if (t) {
       const act = t.dataset.act;
       if (act === 'menu') menu(true); else if (act === 'close-menu') menu(false); else if (act === 'chat') chat(!$('#chat').classList.contains('open'));
-      else if (act === 'search') searchOpen(); else if (act === 'search-close') searchClose();
     }
     if (a && $('#drawer').classList.contains('open') && $('#drawer').contains(a)) menu(false);
-    if (a && !$('#search-pop').hidden && $('#search-pop').contains(a)) { searchClose(); }
     const ck = e.target.closest('[data-cookie]'); if (ck) { ls.set('ch_cookie', ck.dataset.cookie); $('#cookie').classList.remove('show'); if (ck.dataset.cookie === 'all') loadAnalytics(); }
   });
   document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape') { if ($('#drawer').classList.contains('open')) menu(false); if (!$('#search-pop').hidden) searchClose(); if ($('#chat').classList.contains('open')) chat(false); }
-    if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') { e.preventDefault(); searchOpen(); }
+    if (e.key === 'Escape') { if ($('#drawer').classList.contains('open')) menu(false); if ($('#chat').classList.contains('open')) chat(false); }
   });
-  $('#sp-in').addEventListener('input', (e) => runSearch(e.target.value.trim()));
-  $('#sp-form').addEventListener('submit', (e) => { e.preventDefault(); const q = $('#sp-in').value.trim(); if (q) { searchClose(); navigate(`/search?q=${encodeURIComponent(q)}`); } });
   $('#chat-form').addEventListener('submit', (e) => { e.preventDefault(); const i = $('#chat-in'); const v = i.value.trim(); if (v.length < 2) return; i.value = ''; ask(v); });
   onAuth(() => renderHeader());
   window.addEventListener('route:rendered', () => {
