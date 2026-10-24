@@ -1,5 +1,5 @@
-// Unsplash photo catalogue for convention hall spaces. Hot-linked from images.unsplash.com.
-export const U = (id, w = 1920) => `https://images.unsplash.com/photo-${id}?auto=format&fit=crop&w=${w}&q=80`;
+// Authentic CVR Convention Hall photographs catalogue (Tangutur, Prakasam Dt.)
+// Local images served directly from /images/ for instant speed and zero latency.
 
 export const CONVENTION_SPACES = [
   {
@@ -7,9 +7,9 @@ export const CONVENTION_SPACES = [
     name: 'Grand Kalyana Mandapam',
     subtitle: 'Flagship Royal Mandapam Stage',
     badge: 'Auspicious Weddings',
-    image: U('1583939003579-730e3918a45a', 1920),
-    thumb: U('1583939003579-730e3918a45a', 400),
-    caption: 'Flagship Royal Mandapam Stage with Fresh Floral Backdrop',
+    image: '/images/hero_mandapam.jpg',
+    thumb: '/images/hero_mandapam.jpg',
+    caption: 'Flagship Royal Mandapam Stage with Sacred Kalasam & Floral Backdrop',
     spec: '45ft Elevated Stage · Acoustic Proofing',
   },
   {
@@ -17,9 +17,9 @@ export const CONVENTION_SPACES = [
     name: 'Pillarless Royal Auditorium',
     subtitle: '12,000 Sq.Ft Grand Hall (1,500 Capacity)',
     badge: 'Pillarless Luxury',
-    image: U('1519167758481-83f550bb49b3', 1920),
-    thumb: U('1519167758481-83f550bb49b3', 400),
-    caption: 'Pillarless Panoramic Viewing with Central Air Conditioning',
+    image: '/images/grand_auditorium.jpg',
+    thumb: '/images/grand_auditorium.jpg',
+    caption: 'Pillarless Panoramic Viewing with 100% Central Chilled-Water AC',
     spec: '1,500 Floating · 950 Seated Guests',
   },
   {
@@ -27,9 +27,9 @@ export const CONVENTION_SPACES = [
     name: 'Architectural Campus Facade',
     subtitle: 'Highway Frontage & Grand Portico',
     badge: 'NH16 Corridor',
-    image: U('1582719478250-c89cae4dc85b', 1920),
-    thumb: U('1582719478250-c89cae4dc85b', 400),
-    caption: 'Highway Frontage Campus with 120+ Car Paved Parking',
+    image: '/images/exterior_facade.jpg',
+    thumb: '/images/exterior_facade.jpg',
+    caption: 'Kondepi Road Frontage with 120+ Car Paved Parking and Royal Portico',
     spec: 'Portico Drop-Off · 24/7 Security CCTV',
   },
   {
@@ -37,9 +37,9 @@ export const CONVENTION_SPACES = [
     name: 'Imperial Reception Foyer',
     subtitle: 'Double-Height Chandelier Lobby',
     badge: "Tangutur's Premier Landmark",
-    image: U('1566073771259-6a8506099945', 1920),
-    thumb: U('1566073771259-6a8506099945', 400),
-    caption: 'Double-Height Chandelier Lobby with Italian Marble & Concierge',
+    image: '/images/entrance_lobby.jpg',
+    thumb: '/images/entrance_lobby.jpg',
+    caption: 'Double-Height Chandelier Entrance Lobby with Italian Marble & Welcome Concierge',
     spec: 'Grand Entrance & Welcome Reception',
   },
   {
@@ -47,9 +47,9 @@ export const CONVENTION_SPACES = [
     name: 'Annapoorna Royal Dining',
     subtitle: '500-Seater Central Dining Plaza',
     badge: 'Hygienic Dining',
-    image: U('1555244162-803834f70033', 1920),
-    thumb: U('1555244162-803834f70033', 400),
-    caption: '500-Seater Dining Plaza with Live Buffet & Steam Kitchen',
+    image: '/images/dining_hall.jpg',
+    thumb: '/images/dining_hall.jpg',
+    caption: '500-Seater Dining Plaza with Live Buffet & Commercial Steam Kitchen',
     spec: 'Steam Cooking · Continuous Batch Dining',
   },
   {
@@ -57,9 +57,9 @@ export const CONVENTION_SPACES = [
     name: 'Designer Reception Stage',
     subtitle: 'Floral Arch & Couple Couch',
     badge: 'Receptions & Sangeet',
-    image: U('1606800052052-a08af7148866', 1920),
-    thumb: U('1606800052052-a08af7148866', 400),
-    caption: 'Designer Reception Stage with Programmable Ambient Truss Lights',
+    image: '/images/reception_stage.jpg',
+    thumb: '/images/reception_stage.jpg',
+    caption: 'Designer Reception Stage with Ambient Programmable LED Rigging',
     spec: 'DMX Controlled Lights · Cinematic Audio',
   },
   {
@@ -67,9 +67,9 @@ export const CONVENTION_SPACES = [
     name: 'Luxury AC Bridal Suite',
     subtitle: 'Ensuite VIP Dressing Room',
     badge: 'VIP Hospitality',
-    image: U('1590490360182-c33d57733427', 1920),
-    thumb: U('1590490360182-c33d57733427', 400),
-    caption: 'Hotel-Grade AC Suites for Bridal Family Comfort',
+    image: '/images/bridal_suite.jpg',
+    thumb: '/images/bridal_suite.jpg',
+    caption: 'Hotel-Grade AC Suites with Private Attached Baths & Vanity Mirrors',
     spec: 'Vanity Mirrors · Attached Baths · Central AC',
   },
   {
@@ -77,9 +77,9 @@ export const CONVENTION_SPACES = [
     name: 'Sannidhi Mini AC Banquet',
     subtitle: 'Intimate 350-Capacity Hall',
     badge: 'Engagements & Functions',
-    image: U('1511795409834-ef04bbd61622', 1920),
-    thumb: U('1511795409834-ef04bbd61622', 400),
-    caption: 'Intimate Air-Conditioned Banquet for Ring Ceremonies & Family Events',
+    image: '/images/mini_hall.jpg',
+    thumb: '/images/mini_hall.jpg',
+    caption: 'Intimate Air-Conditioned Banquet for Engagements, Sangeet & Private Family Events',
     spec: '350 Floating · Dedicated Dining Area',
   },
 ];
@@ -91,7 +91,7 @@ export const GALLERY_ITEMS = [
     categoryLabel: 'MANDAPAM',
     title: 'Grand Royal Wedding Mandapam',
     description: 'Lavishly decorated 45ft elevated floral stage with golden chandeliers and Italian marble hall.',
-    image: U('1583939003579-730e3918a45a', 1200),
+    image: '/images/hero_mandapam.jpg',
   },
   {
     id: 'gal-2',
@@ -99,7 +99,7 @@ export const GALLERY_ITEMS = [
     categoryLabel: 'MANDAPAM',
     title: 'Pillarless 1,500-Capacity Royal Auditorium',
     description: '12,000 sq ft grand auditorium with golden false ceiling lighting and unobstructed guest sightlines.',
-    image: U('1519167758481-83f550bb49b3', 1200),
+    image: '/images/grand_auditorium.jpg',
   },
   {
     id: 'gal-3',
@@ -107,7 +107,7 @@ export const GALLERY_ITEMS = [
     categoryLabel: 'MANDAPAM',
     title: 'Traditional Vedic Muhurtham Mandapam',
     description: 'Sacred ceremonial altar adorned with golden Kalasams, brass deepam lamps, and fresh yellow marigold garlands.',
-    image: U('1544077960-604201fe74bc', 1200),
+    image: '/images/mandapam_kalasam.jpg',
   },
   {
     id: 'gal-4',
@@ -115,7 +115,7 @@ export const GALLERY_ITEMS = [
     categoryLabel: 'STAGE',
     title: 'Designer Floral Reception Stage',
     description: 'Circular floral arch with pastel roses, fairy lights canopy, and royal couple couch.',
-    image: U('1606800052052-a08af7148866', 1200),
+    image: '/images/reception_stage.jpg',
   },
   {
     id: 'gal-5',
@@ -123,7 +123,7 @@ export const GALLERY_ITEMS = [
     categoryLabel: 'STAGE',
     title: 'Sangeet & Celebration Light Stage',
     description: 'Vibrant celebration stage with illuminated fairy light drapery, floral ring arches, and majestic chandeliers.',
-    image: U('1465847899084-d164df4dedc6', 1200),
+    image: '/images/sangeet_stage.jpg',
   },
   {
     id: 'gal-6',
@@ -131,7 +131,7 @@ export const GALLERY_ITEMS = [
     categoryLabel: 'STAGE',
     title: 'Sannidhi Mini Banquet & Engagement Stage',
     description: 'Cozy 350-capacity air-conditioned banquet hall set up for an intimate engagement ceremony.',
-    image: U('1511795409834-ef04bbd61622', 1200),
+    image: '/images/mini_hall.jpg',
   },
   {
     id: 'gal-7',
@@ -139,7 +139,7 @@ export const GALLERY_ITEMS = [
     categoryLabel: 'DINING',
     title: 'Annapoorna Royal Dining Plaza',
     description: '500-seater hygienic banquet dining with granite tables and stainless steel commercial buffet.',
-    image: U('1555244162-803834f70033', 1200),
+    image: '/images/dining_hall.jpg',
   },
   {
     id: 'gal-8',
@@ -147,7 +147,7 @@ export const GALLERY_ITEMS = [
     categoryLabel: 'DINING',
     title: 'Imperial Buffet & Banquet Spread',
     description: 'Lavish food counters with copper and brass chafing dishes, live counters, and sparkling chandeliers.',
-    image: U('1519225421980-715cb0215aed', 1200),
+    image: '/images/dining_buffet.jpg',
   },
   {
     id: 'gal-9',
@@ -155,7 +155,7 @@ export const GALLERY_ITEMS = [
     categoryLabel: 'SUITES',
     title: 'Ensuite Luxury Bridal Dressing Salon',
     description: 'Full-length vanity mirrors, private attached western restroom, comfortable velvet seating, and central AC.',
-    image: U('1590490360182-c33d57733427', 1200),
+    image: '/images/bridal_suite.jpg',
   },
   {
     id: 'gal-10',
@@ -163,36 +163,36 @@ export const GALLERY_ITEMS = [
     categoryLabel: 'SUITES',
     title: 'VIP Family & Groom AC Lounge',
     description: 'Private air-conditioned suite for groom family and immediate relatives with direct hall access.',
-    image: U('1582719508461-905c673771fd', 1200),
+    image: '/images/groom_suite.jpg',
   },
   {
     id: 'gal-11',
     category: 'campus',
     categoryLabel: 'EXTERIOR',
-    title: 'Night Illumination & Main Highway Arch',
-    description: 'Dramatic architectural LED facade illumination on Kondepi Road facing the Indian Petrol Station.',
-    image: U('1564013799919-ab600027ffc6', 1200),
+    title: 'Main Highway Facade & Portico',
+    description: 'Dramatic architectural facade illumination on Kondepi Road facing the Indian Petrol Station.',
+    image: '/images/exterior_facade.jpg',
   },
   {
     id: 'gal-12',
     category: 'campus',
     categoryLabel: 'EXTERIOR',
-    title: 'Paved Parking & Valet Arrival Portico',
-    description: 'Wide 120-car paved parking bay and covered grand entrance portico for guest drop-off.',
-    image: U('1582719478250-c89cae4dc85b', 1200),
+    title: 'Grand Entrance & Welcome Reception',
+    description: 'Double-height entrance lobby welcoming guests with royal chandeliers and Italian marble foyer.',
+    image: '/images/grand_entrance.jpg',
   },
 ];
 
 export const IMG = {
-  foyer: CONVENTION_SPACES[3].image,
-  mandapam: CONVENTION_SPACES[0].image,
-  auditorium: CONVENTION_SPACES[1].image,
-  dining: CONVENTION_SPACES[4].image,
-  stage: CONVENTION_SPACES[5].image,
-  facade: CONVENTION_SPACES[2].image,
-  suites: CONVENTION_SPACES[6].image,
-  banquet: CONVENTION_SPACES[7].image,
-  canopyCouple: U('1606800052052-a08af7148866', 1200),
-  banquetRound: U('1519167758481-83f550bb49b3', 1200),
-  floralHall: U('1583939003579-730e3918a45a', 1200),
+  foyer: '/images/entrance_lobby.jpg',
+  mandapam: '/images/hero_mandapam.jpg',
+  auditorium: '/images/grand_auditorium.jpg',
+  dining: '/images/dining_hall.jpg',
+  stage: '/images/reception_stage.jpg',
+  facade: '/images/exterior_facade.jpg',
+  suites: '/images/bridal_suite.jpg',
+  banquet: '/images/mini_hall.jpg',
+  canopyCouple: '/images/reception_stage.jpg',
+  banquetRound: '/images/grand_auditorium.jpg',
+  floralHall: '/images/hero_mandapam.jpg',
 };
