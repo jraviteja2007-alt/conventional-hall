@@ -3,7 +3,8 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { App, ApiError, securityHeaders, httpsRedirect, csrf, rateLimit, readBody, serveStatic } from './lib/http.js';
 import { config } from './config.js';
-import { migrate, get } from './db.js';
+import { migrate, get, run } from './db.js';
+import { hashPassword } from './lib/auth.js';
 import { seed } from './seed.js';
 import { loadUser } from './routes/common.js';
 import { publicRoutes } from './routes/public.js';
@@ -17,6 +18,11 @@ import { sweep } from './services/bookings.js';
 export function buildApp() {
   migrate();
   if (!get('SELECT 1 x FROM halls LIMIT 1')) seed();
+  if (!get("SELECT 1 x FROM users WHERE role IN ('admin','super_admin') LIMIT 1")) {
+    const adminPw = config.seedAdminPassword || 'Admin@12345';
+    const email = config.seedAdminEmail || 'admin@cvrconvention.com';
+    run(`INSERT OR IGNORE INTO users(name,email,phone,password_hash,role) VALUES ('Super Admin',?, '+91 98765 43210', ?, 'super_admin')`, email, hashPassword(adminPw));
+  }
   const app = new App();
   const files = serveStatic(config.publicDir);
 

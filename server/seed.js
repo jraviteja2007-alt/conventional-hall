@@ -112,8 +112,13 @@ export function seed({ demo = !config.prod } = {}) {
       ['Anitha K', 'Accounts', '+91 98480 44444', 'accounts@aurelia-hall.example', 'Invoices, receipts, refunds', 'Mon–Sat, 10am–6pm']]
       .forEach((s) => run('INSERT INTO staff(name,role,phone,email,responsibilities,availability) VALUES (?,?,?,?,?,?)', ...s));
 
-    // Admin account (production requires SEED_ADMIN_PASSWORD; dev gets a documented default).
-    if (config.seedAdminPassword) run(`INSERT INTO users(name,email,phone,password_hash,role) VALUES ('Super Admin',?, '+91 98765 43210', ?, 'super_admin')`, config.seedAdminEmail, hashPassword(config.seedAdminPassword));
+    // Admin account
+    const adminPw = config.seedAdminPassword || 'Admin@12345';
+    const primaryAdmin = config.seedAdminEmail || 'admin@cvrconvention.com';
+    run(`INSERT OR IGNORE INTO users(name,email,phone,password_hash,role) VALUES ('Super Admin',?, '+91 98765 43210', ?, 'super_admin')`, primaryAdmin, hashPassword(adminPw));
+    if (primaryAdmin !== 'admin@hall.local') {
+      run(`INSERT OR IGNORE INTO users(name,email,phone,password_hash,role) VALUES ('Super Admin','admin@hall.local', '+91 98765 43210', ?, 'super_admin')`, hashPassword(adminPw));
+    }
     if (demo) seedDemo(h1, h2);
   });
 }

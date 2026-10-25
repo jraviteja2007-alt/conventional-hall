@@ -35,8 +35,8 @@ export const config = {
   },
   smsWebhookUrl: env.SMS_WEBHOOK_URL || '',
   whatsappWebhookUrl: env.WHATSAPP_WEBHOOK_URL || '',
-  seedAdminEmail: env.SEED_ADMIN_EMAIL || 'admin@hall.local',
-  seedAdminPassword: env.SEED_ADMIN_PASSWORD || (prod ? '' : 'Admin@12345'),
+  seedAdminEmail: env.SEED_ADMIN_EMAIL || 'admin@cvrconvention.com',
+  seedAdminPassword: env.SEED_ADMIN_PASSWORD || 'Admin@12345',
   trustProxy: env.TRUST_PROXY === 'true',
   forceHttps: prod && env.FORCE_HTTPS !== 'false',
 };
