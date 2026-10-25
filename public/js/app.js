@@ -78,7 +78,7 @@ function renderFooter() {
     </div>
     <div class="footer-map"><iframe class="map-frame" title="Map showing the location of ${esc(s.name)}" loading="lazy" referrerpolicy="no-referrer-when-downgrade" src="${mapsEmbed()}"></iframe><a class="btn gold sm" href="${mapsDir()}" target="_blank" rel="noopener noreferrer">${icon('pin')} Get directions</a></div>
     <div class="footer-bottom"><span>© ${new Date().getFullYear()} ${s.name}. All rights reserved.</span>
-      <nav aria-label="Legal" class="row" style="gap:6px 18px">${LEGAL.map(([h, l]) => html`<a href="${h}">${l}</a>`)}</nav></div></div>`);
+      <nav aria-label="Legal" class="row" style="gap:6px 18px">${LEGAL.map(([h, l]) => html`<a href="${h}">${l}</a>`)}<a href="/staff" class="staff-link" style="opacity:0.75" target="_blank" rel="noopener">Staff portal</a></nav></div></div>`);
   setHTML($('#fab'), html`<a class="btn glass" href="${telLink()}" data-track="call_click">${icon('phone')} Call</a>
     <a class="btn success" href="${waLink('Hello, I would like to know more about booking the hall.')}" target="_blank" rel="noopener noreferrer" data-track="whatsapp_click">${icon('whatsapp')} WhatsApp</a>
     <a class="btn gold" href="/book" data-track="book_click">Book</a>`);

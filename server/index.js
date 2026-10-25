@@ -53,11 +53,29 @@ export function buildApp() {
     res.setHeader('Cache-Control', 'public, max-age=86400'); res.send(fs.readFileSync(f), mime);
   });
 
+  app.get('/staff', (req, res) => {
+    res.setHeader('Location', '/admin');
+    res.status(302).end();
+  });
+  app.get('/staff/:sub', (req, res) => {
+    res.setHeader('Location', `/admin/${req.params.sub}`);
+    res.status(302).end();
+  });
+
   // SPA shell with server-rendered SEO head. Unknown routes get a real HTTP 404.
   app.fallback = (req, res) => {
     if (req.method !== 'GET' && req.method !== 'HEAD') return;
     if (req.path.startsWith('/api/')) return;
-    if (req.path === '/admin' || req.path.startsWith('/admin/')) { res.setHeader('Cache-Control', 'no-store'); return res.send(fs.readFileSync(path.join(config.publicDir, 'admin.html')), 'text/html; charset=utf-8'); }
+    const host = String(req.headers['x-forwarded-host'] || req.headers.host || '').toLowerCase();
+    const isStaffDomain = host.startsWith('staff.') || host.startsWith('admin.');
+    if (isStaffDomain && (req.path === '/' || req.path === '')) {
+      res.setHeader('Location', '/admin');
+      return res.status(302).end();
+    }
+    if (req.path === '/admin' || req.path.startsWith('/admin/') || req.path === '/staff' || req.path.startsWith('/staff/')) {
+      res.setHeader('Cache-Control', 'no-store');
+      return res.send(fs.readFileSync(path.join(config.publicDir, 'admin.html')), 'text/html; charset=utf-8');
+    }
     const { status, html } = renderPage(req.path);
     res.statusCode = status; res.setHeader('Cache-Control', 'no-cache');
     res.send(html, 'text/html; charset=utf-8');
