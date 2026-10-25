@@ -125,8 +125,12 @@ export function seed({ demo = !config.prod } = {}) {
 
 function seedDemo(h1, h2) {
   const pw = (p) => hashPassword(p);
-  run(`INSERT INTO users(name,email,phone,password_hash,role) VALUES ('Hall Manager','manager@hall.local','+91 98480 11111',?, 'manager')`, pw('Manager@12345'));
-  run(`INSERT INTO users(name,email,phone,password_hash,role) VALUES ('Front Desk','staff@hall.local','+91 98480 22222',?, 'staff')`, pw('Staff@12345'));
+  const managerEmail = config.seedManagerEmail || 'manager@hall.local';
+  const managerPw = config.seedManagerPassword || 'Manager@12345';
+  const staffEmail = config.seedStaffEmail || 'staff@hall.local';
+  const staffPw = config.seedStaffPassword || 'Staff@12345';
+  run(`INSERT OR IGNORE INTO users(name,email,phone,password_hash,role) VALUES ('Hall Manager',?,'+91 98480 11111',?, 'manager')`, managerEmail, pw(managerPw));
+  run(`INSERT OR IGNORE INTO users(name,email,phone,password_hash,role) VALUES ('Front Desk',?,'+91 98480 22222',?, 'staff')`, staffEmail, pw(staffPw));
   const cust = run(`INSERT INTO users(name,email,phone,password_hash,role) VALUES ('Demo Customer','customer@example.com','+91 90000 12345',?, 'customer')`, pw('Customer@12345')).lastInsertRowid;
   const others = ['Sravani Reddy', 'Kiran Kumar', 'Mahesh Naidu', 'Divya Chowdary', 'Prasad Rao', 'Hima Bindu'].map((n, i) =>
     run(`INSERT INTO users(name,email,phone,password_hash,role) VALUES (?,?,?,?, 'customer')`, n, `${n.split(' ')[0].toLowerCase()}@example.com`, `+91 9000${i}00000`, pw('Customer@12345')).lastInsertRowid);

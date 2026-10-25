@@ -37,6 +37,10 @@ export const config = {
   whatsappWebhookUrl: env.WHATSAPP_WEBHOOK_URL || '',
   seedAdminEmail: env.SEED_ADMIN_EMAIL || 'admin@cvrconvention.com',
   seedAdminPassword: env.SEED_ADMIN_PASSWORD || 'Admin@12345',
+  seedManagerEmail: env.SEED_MANAGER_EMAIL || 'manager@hall.local',
+  seedManagerPassword: env.SEED_MANAGER_PASSWORD || 'Manager@12345',
+  seedStaffEmail: env.SEED_STAFF_EMAIL || 'staff@hall.local',
+  seedStaffPassword: env.SEED_STAFF_PASSWORD || 'Staff@12345',
   trustProxy: env.TRUST_PROXY === 'true',
   forceHttps: prod && env.FORCE_HTTPS !== 'false',
 };
