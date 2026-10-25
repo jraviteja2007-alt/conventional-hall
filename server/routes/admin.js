@@ -349,16 +349,23 @@ export function adminRoutes(app) {
     if (get('SELECT 1 x FROM bookings WHERE user_id=?', id)) throw new ApiError(409, 'IN_USE', 'This customer has bookings. Disable the account instead of deleting it.');
     run(`DELETE FROM users WHERE id=? AND role='customer'`, id); audit(req, 'delete', 'customer', id); res.json({ ok: true });
   });
-  app.get(`${A}/users`, superAdmin, (req, res) => res.json({ rows: all(`SELECT id,name,email,phone,role,active,created_at FROM users WHERE role<>'customer' ORDER BY id`) }));
+  app.get(`${A}/users`, superAdmin, (req, res) => res.json({ rows: all(`SELECT id,name,email,phone,role,active,active AS is_active,created_at FROM users WHERE role<>'customer' ORDER BY id`) }));
   app.post(`${A}/users`, superAdmin, (req, res) => {
-    const v = validate(req.body, { name: { required: true, min: 2, max: 80 }, email: { type: 'email', required: true }, phone: { type: 'phone' }, role: { enum: ['staff', 'manager', 'admin', 'super_admin'], required: true }, password: { required: true, min: 10, max: 100 } });
+    let pw = req.body.password;
+    if (!pw) {
+      pw = crypto.randomBytes(6).toString('base64').replace(/[^a-zA-Z0-9]/g, 'a') + 'A1!';
+      req.body.password = pw;
+    }
+    const v = validate(req.body, { name: { required: true, min: 2, max: 80 }, email: { type: 'email', required: true }, phone: { type: 'phone' }, role: { enum: ['staff', 'manager', 'admin', 'super_admin'], required: true }, password: { required: true, min: 8, max: 100 } });
     if (get('SELECT 1 x FROM users WHERE email=?', v.email)) throw new ApiError(409, 'EMAIL_TAKEN', 'Email already registered', { email: 'Email already registered' });
     const r = run('INSERT INTO users(name,email,phone,password_hash,role) VALUES (?,?,?,?,?)', v.name, v.email, v.phone, hashPassword(v.password), v.role);
-    audit(req, 'create', 'user', r.lastInsertRowid, { email: v.email, role: v.role }); res.json({ id: Number(r.lastInsertRowid) }, 201);
+    audit(req, 'create', 'user', r.lastInsertRowid, { email: v.email, role: v.role }); res.json({ id: Number(r.lastInsertRowid), temporaryPassword: pw }, 201);
   });
   app.put(`${A}/users/:id`, superAdmin, (req, res) => {
     const id = idParam(req);
-    const v = validate(req.body, { name: { min: 2, max: 80 }, role: { enum: ['customer', 'staff', 'manager', 'admin', 'super_admin'] }, active: { type: 'bool' }, password: { min: 10, max: 100 } });
+    const activeVal = req.body.active !== undefined ? req.body.active : req.body.is_active;
+    if (activeVal !== undefined) req.body.active = activeVal ? 1 : 0;
+    const v = validate(req.body, { name: { min: 2, max: 80 }, role: { enum: ['customer', 'staff', 'manager', 'admin', 'super_admin'] }, active: { type: 'bool' }, password: { min: 8, max: 100 } });
     if (id === req.user.id && (v.role && v.role !== req.user.role || v.active === 0)) throw new ApiError(409, 'SELF', 'You cannot demote or disable your own account.');
     run('UPDATE users SET name=COALESCE(?,name), role=COALESCE(?,role), active=COALESCE(?,active), password_hash=COALESCE(?,password_hash) WHERE id=?', v.name, v.role, v.active, v.password ? hashPassword(v.password) : null, id);
     audit(req, 'update', 'user', id, { role: v.role, active: v.active, password_changed: !!v.password }); res.json({ ok: true });
