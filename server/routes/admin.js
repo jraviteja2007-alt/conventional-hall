@@ -401,20 +401,17 @@ export function adminRoutes(app) {
     if (fmt === 'xls') {
       const cols = rep.columns;
       const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><style>table,th,td{border:1px solid #ccc;border-collapse:collapse;padding:8px;}th{background:#6b1e2e;color:#fff;font-weight:bold;}</style></head><body><h2>${req.params.what.toUpperCase()} REPORT</h2><table><thead><tr>${cols.map((c) => `<th>${c}</th>`).join('')}</tr></thead><tbody>${rep.rows.map((r) => `<tr>${cols.map((c) => `<td>${r[c] ?? ''}</td>`).join('')}</tr>`).join('')}</tbody></table></body></html>`;
-      res.setHeader('Content-Type', 'application/vnd.ms-excel; charset=utf-8');
       res.setHeader('Content-Disposition', `attachment; filename="${title}.xls"`);
-      return res.send(html);
+      return res.send(html, 'application/vnd.ms-excel; charset=utf-8');
     }
 
     if (fmt === 'pdf') {
       const cols = rep.columns;
       const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>${title}</title><style>body{font-family:system-ui,-apple-system,sans-serif;padding:32px;color:#1a1622;}table{width:100%;border-collapse:collapse;margin-top:20px;}th,td{border:1px solid #ddd;padding:10px;text-align:left;}th{background:#f4ecef;font-weight:700;}h1{margin:0;color:#6b1e2e;font-size:24px;}.sub{color:#666;font-size:14px;margin-top:4px;}</style></head><body onload="window.print()"><h1>CVR Convention Hall</h1><div class="sub">${req.params.what.toUpperCase()} REPORT · Date range: ${req.query.from || 'All'} to ${req.query.to || 'Present'}</div><table><thead><tr>${cols.map((c) => `<th>${c}</th>`).join('')}</tr></thead><tbody>${rep.rows.map((r) => `<tr>${cols.map((c) => `<td>${r[c] ?? ''}</td>`).join('')}</tr>`).join('')}</tbody></table></body></html>`;
-      res.setHeader('Content-Type', 'text/html; charset=utf-8');
-      return res.send(html);
+      return res.send(html, 'text/html; charset=utf-8');
     }
 
     // Default: CSV
-    res.setHeader('Content-Type', 'text/csv; charset=utf-8');
     res.setHeader('Content-Disposition', `attachment; filename="${title}.csv"`);
     return res.send(toCsv(rep.rows), 'text/csv; charset=utf-8');
   });
