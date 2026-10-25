@@ -1,4 +1,4 @@
-import { html, setHTML, $, icon, inr, num, img, openLightbox } from '../ui.js';
+import { html, setHTML, $, $$, icon, inr, num, img, openLightbox } from '../ui.js';
 import { S } from '../store.js';
 import { get } from '../api.js';
 import { sectionHead, facilityCard, eventCard, packageCard, reviewCard, hallCard, waLink, telLink, mapsDir, mapsEmbed, mapsNear } from '../components.js';
@@ -35,12 +35,17 @@ export default async function home(ctx) {
     ['125 kVA', 'Silent Power Backup', '100% uninterrupted generator power backup with instantaneous changeover for stage, sound & AC.'],
   ];
 
-  // High-res authentic convention spaces for the hero stage (Zero 3D lag, instant local loading)
+  // High-res authentic convention spaces for the hero stage with auto-slideshow
   const heroSpaces = [
     { name: 'Grand Mandapam', img: '/images/hero_mandapam.jpg', tag: 'Grand Kalyana Mandapam · 1,500 Guests' },
-    { name: 'Pillarless Auditorium', img: '/images/grand_auditorium.jpg', tag: 'Pillarless Royal Auditorium · 12,000 Sq.Ft' },
+    { name: 'Royal Auditorium', img: '/images/grand_auditorium.jpg', tag: 'Pillarless Royal Auditorium · 12,000 Sq.Ft' },
+    { name: 'Reception Stage', img: '/images/reception_stage.jpg', tag: 'Imperial Reception Stage · 40-ft LED Backdrop' },
     { name: 'Annapoorna Dining', img: '/images/dining_hall.jpg', tag: 'Annapoorna Dining Plaza · 500 Seated Batch' },
+    { name: 'Royal Buffet', img: '/images/dining_buffet.jpg', tag: 'Deluxe Banquet & Live Catering Setup' },
     { name: 'AC Bridal Suites', img: '/images/bridal_suite.jpg', tag: '8 Luxury AC Bridal & VIP Guest Suites' },
+    { name: 'Muhurtham Decor', img: '/images/royal_mandapam_decor.jpg', tag: 'Traditional Telugu Muhurtham Mandapam' },
+    { name: 'Luxury Ballroom', img: '/images/luxury_ballroom.jpg', tag: 'Grand Chandelier Banquet Ballroom' },
+    { name: 'Campus & Parking', img: '/images/exterior_facade.jpg', tag: 'Highway Campus · 120+ Cars Parking' },
   ];
 
   const heroImg = '/images/hero_mandapam.jpg';
@@ -63,7 +68,11 @@ export default async function home(ctx) {
         <div class="hero-stage">
           <div class="hero-photo-box" id="hero-photo-box" role="region" aria-label="Convention Hall Spaces Preview">
             <span class="tag" id="hero-tag">${heroSpaces[0].tag}</span>
+            <span class="slide-counter" id="hero-counter">1 / ${heroSpaces.length}</span>
             <img id="hero-img" src="${heroSpaces[0].img}" alt="${heroSpaces[0].name}" width="1600" height="1100" loading="eager" />
+            <button type="button" class="hero-nav-btn prev" id="hero-prev" aria-label="Previous space">&#8249;</button>
+            <button type="button" class="hero-nav-btn next" id="hero-next" aria-label="Next space">&#8250;</button>
+            <div class="hero-progress" id="hero-progress"></div>
             <div class="layout-chips" id="space-chips" role="group" aria-label="Convention spaces">
               ${heroSpaces.map((sp, i) => html`<button type="button" class="chip sm ${i ? '' : 'active'}" data-i="${i}" aria-pressed="${i === 0}">${sp.name}</button>`)}
             </div>
@@ -139,31 +148,124 @@ export default async function home(ctx) {
     <span class="eyebrow" style="color:#f1d9a0">Ready when you are</span><h2>Let us host your next celebration</h2><p class="lead" style="color:#f2e6ea;max-width:52ch">Check your date in seconds, or talk to our team for a site visit and a custom quotation.</p>
     <div class="row" style="margin-top:22px"><a class="btn gold lg" href="/book" data-track="book_click">Book now</a><a class="btn glass lg" href="/contact">Request a callback</a><a class="btn glass lg" href="${telLink()}" data-track="call_click">${icon('phone')} Call us</a></div></div></div></section>`);
 
-  /* ---- Interactive Hero Photo Switcher (No 3D, fast & responsive) ---- */
-  const heroImgEl = $('#hero-img');
-  const heroTagEl = $('#hero-tag');
-  $('#space-chips')?.addEventListener('click', (e) => {
-    const b = e.target.closest('[data-i]');
-    if (!b) return;
-    const idx = Number(b.dataset.i);
-    const item = heroSpaces[idx];
+  /* ---- Auto-changing Hero Photo Carousel ---- */
+  let curIndex = 0;
+  let autoTimer = null;
+  const INTERVAL_MS = 3800;
+  const heroBox = $('#hero-photo-box', ctx.el);
+  const heroImgEl = $('#hero-img', ctx.el);
+  const heroTagEl = $('#hero-tag', ctx.el);
+  const heroCounterEl = $('#hero-counter', ctx.el);
+  const heroProgressBar = $('#hero-progress', ctx.el);
+  const chipsContainer = $('#space-chips', ctx.el);
+
+  // Preload all space images in browser cache for instantaneous transitions
+  heroSpaces.forEach((s) => {
+    const im = new Image();
+    im.src = s.img;
+  });
+
+  function setSpace(idx, manual = false) {
+    curIndex = (idx + heroSpaces.length) % heroSpaces.length;
+    const item = heroSpaces[curIndex];
     if (!item) return;
-    $$('#space-chips .chip').forEach((c) => {
-      const active = c === b;
+
+    // Update chips active state and auto-scroll into view
+    const chips = $$('#space-chips .chip', ctx.el);
+    chips.forEach((c, i) => {
+      const active = i === curIndex;
       c.classList.toggle('active', active);
       c.setAttribute('aria-pressed', String(active));
+      if (active) {
+        c.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+      }
     });
+
+    // Cross-fade image smoothly
     if (heroImgEl) {
-      heroImgEl.style.opacity = '0.4';
+      heroImgEl.style.opacity = '0.35';
       setTimeout(() => {
         heroImgEl.src = item.img;
         heroImgEl.alt = item.name;
         heroImgEl.style.opacity = '1';
-      }, 80);
+      }, 70);
     }
+
     if (heroTagEl) {
-      heroTagEl.textContent = item.tag;
+      heroTagEl.style.opacity = '0.4';
+      setTimeout(() => {
+        heroTagEl.textContent = item.tag;
+        heroTagEl.style.opacity = '1';
+      }, 70);
     }
+
+    if (heroCounterEl) {
+      heroCounterEl.textContent = `${curIndex + 1} / ${heroSpaces.length}`;
+    }
+
+    resetAutoPlay();
+  }
+
+  function startProgress() {
+    if (!heroProgressBar) return;
+    heroProgressBar.style.transition = 'none';
+    heroProgressBar.style.width = '0%';
+    setTimeout(() => {
+      heroProgressBar.style.transition = `width ${INTERVAL_MS}ms linear`;
+      heroProgressBar.style.width = '100%';
+    }, 20);
+  }
+
+  function resetAutoPlay() {
+    clearInterval(autoTimer);
+    startProgress();
+    autoTimer = setInterval(() => {
+      setSpace(curIndex + 1);
+    }, INTERVAL_MS);
+  }
+
+  // Click on chips
+  chipsContainer?.addEventListener('click', (e) => {
+    const b = e.target.closest('[data-i]');
+    if (!b) return;
+    setSpace(Number(b.dataset.i), true);
+  });
+
+  // Prev / Next arrow buttons
+  $('#hero-prev', ctx.el)?.addEventListener('click', (e) => {
+    e.stopPropagation();
+    setSpace(curIndex - 1, true);
+  });
+  $('#hero-next', ctx.el)?.addEventListener('click', (e) => {
+    e.stopPropagation();
+    setSpace(curIndex + 1, true);
+  });
+
+  // Pause on hover, resume on leave
+  heroBox?.addEventListener('mouseenter', () => {
+    clearInterval(autoTimer);
+    if (heroProgressBar) heroProgressBar.style.width = '0%';
+  });
+  heroBox?.addEventListener('mouseleave', () => {
+    resetAutoPlay();
+  });
+
+  // Touch swipe support on mobile devices
+  let touchStartX = 0;
+  heroBox?.addEventListener('touchstart', (e) => {
+    touchStartX = e.changedTouches[0].screenX;
+  }, { passive: true });
+  heroBox?.addEventListener('touchend', (e) => {
+    const diff = e.changedTouches[0].screenX - touchStartX;
+    if (Math.abs(diff) > 40) {
+      setSpace(diff > 0 ? curIndex - 1 : curIndex + 1, true);
+    }
+  }, { passive: true });
+
+  // Start auto-play initially
+  resetAutoPlay();
+  ctx.onCleanup(() => {
+    clearInterval(autoTimer);
   });
 
   /* ---- Coverflow Gallery ---- */
