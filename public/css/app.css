@@ -153,6 +153,15 @@ main { min-height: 60vh; }
 .hero-stage { perspective: 1400px; position: relative; }
 .hero-photo-box { position: relative; aspect-ratio: 16 / 11; border-radius: var(--r-xl); background: radial-gradient(circle at 50% 30%, rgba(42,24,38,.55), rgba(18,10,22,.78)); border: 1px solid rgba(255,255,255,.2); box-shadow: 0 40px 80px -20px rgba(0,0,0,.7), inset 0 1px 0 rgba(255,255,255,.25); backdrop-filter: blur(6px); overflow: hidden; width: 100%; contain: layout paint; }
 .hero-photo-box img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; transition: opacity .45s ease-in-out; display: block; }
+.hero-photo-caption { position: absolute; top: 14px; left: 16px; display: inline-flex; align-items: center; gap: 8px; background: rgba(14,10,20,.68); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,.2); border-radius: 999px; padding: 6px 16px; z-index: 5; pointer-events: none; max-width: calc(100% - 32px); box-shadow: 0 4px 16px rgba(0,0,0,.35); transition: opacity .3s ease; }
+.hero-caption-title { font-family: var(--ff-head); font-size: .88rem; font-weight: 700; color: var(--accent); letter-spacing: .03em; white-space: nowrap; }
+.hero-caption-dot { color: rgba(255,255,255,.4); font-size: .85rem; }
+.hero-caption-desc { font-size: .78rem; color: #f2e9ed; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+@media (max-width: 600px) {
+  .hero-photo-caption { top: 10px; left: 10px; padding: 5px 12px; gap: 6px; max-width: calc(100% - 20px); }
+  .hero-caption-title { font-size: .8rem; }
+  .hero-caption-desc { font-size: .72rem; }
+}
 .hero-dots { position: absolute; left: 50%; bottom: 14px; transform: translateX(-50%); display: flex; gap: 8px; align-items: center; padding: 6px 14px; border-radius: 999px; background: rgba(14,10,20,.58); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,.18); z-index: 5; }
 .hero-dot { width: 8px; height: 8px; border-radius: 999px; background: rgba(255,255,255,.45); border: none; padding: 0; cursor: pointer; transition: all .25s ease; }
 .hero-dot:hover { background: rgba(255,255,255,.9); transform: scale(1.2); }

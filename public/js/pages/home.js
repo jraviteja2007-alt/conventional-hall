@@ -67,6 +67,11 @@ export default async function home(ctx) {
         </div>
         <div class="hero-stage">
           <div class="hero-photo-box" id="hero-photo-box" role="region" aria-label="Convention Hall Spaces Preview">
+            <div class="hero-photo-caption" id="hero-caption">
+              <span class="hero-caption-title" id="caption-title">${heroSpaces[0].name}</span>
+              <span class="hero-caption-dot" aria-hidden="true">·</span>
+              <span class="hero-caption-desc" id="caption-desc">${heroSpaces[0].tag}</span>
+            </div>
             <img id="hero-img" src="${heroSpaces[0].img}" alt="${heroSpaces[0].name}" width="1600" height="1100" loading="eager" />
             <button type="button" class="hero-nav-btn prev" id="hero-prev" aria-label="Previous photo">&#8249;</button>
             <button type="button" class="hero-nav-btn next" id="hero-next" aria-label="Next photo">&#8250;</button>
@@ -154,6 +159,9 @@ export default async function home(ctx) {
   const heroImgEl = $('#hero-img', ctx.el);
   const heroProgressBar = $('#hero-progress', ctx.el);
   const dotsContainer = $('#hero-dots', ctx.el);
+  const captionEl = $('#hero-caption', ctx.el);
+  const captionTitleEl = $('#caption-title', ctx.el);
+  const captionDescEl = $('#caption-desc', ctx.el);
 
   // Preload all space images in browser cache for instantaneous transitions
   heroSpaces.forEach((s) => {
@@ -181,6 +189,16 @@ export default async function home(ctx) {
         heroImgEl.src = item.img;
         heroImgEl.alt = item.name;
         heroImgEl.style.opacity = '1';
+      }, 70);
+    }
+
+    // Cross-fade name and description on top of image smoothly
+    if (captionEl && captionTitleEl && captionDescEl) {
+      captionEl.style.opacity = '0.3';
+      setTimeout(() => {
+        captionTitleEl.textContent = item.name;
+        captionDescEl.textContent = item.tag || item.name;
+        captionEl.style.opacity = '1';
       }, 70);
     }
 
