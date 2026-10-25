@@ -151,20 +151,17 @@ main { min-height: 60vh; }
 .hero-loc { display: inline-flex; gap: 8px; align-items: center; padding: 8px 16px 8px 12px; border-radius: 999px; background: rgba(255,255,255,.1); border: 1px solid rgba(255,255,255,.22); backdrop-filter: blur(10px); font-size: .88rem; margin-bottom: 22px; }
 
 .hero-stage { perspective: 1400px; position: relative; }
-.hero-photo-box { position: relative; aspect-ratio: 16 / 11; border-radius: var(--r-xl); background: radial-gradient(circle at 50% 30%, rgba(42,24,38,.55), rgba(18,10,22,.78)); border: 1px solid rgba(255,255,255,.2); box-shadow: 0 40px 80px -20px rgba(0,0,0,.7), inset 0 1px 0 rgba(255,255,255,.25); transform-style: preserve-3d; transition: transform .25s ease-out; backdrop-filter: blur(6px); overflow: hidden; }
-.hero-photo-box img { width: 100%; height: 100%; object-fit: cover; transition: opacity .45s ease-in-out; }
-.hero-photo-box .tag { position: absolute; left: 16px; top: 14px; font-size: .72rem; letter-spacing: .14em; text-transform: uppercase; background: rgba(0,0,0,.6); backdrop-filter: blur(6px); padding: 6px 14px; border-radius: 999px; color: #f5e7c4; z-index: 4; border: 1px solid rgba(255,255,255,.18); transition: opacity .25s ease; pointer-events: none; }
-.hero-photo-box .slide-counter { position: absolute; right: 16px; top: 14px; font-size: .72rem; font-weight: 700; letter-spacing: .08em; background: rgba(0,0,0,.6); backdrop-filter: blur(6px); border: 1px solid rgba(255,255,255,.18); padding: 6px 12px; border-radius: 999px; color: #fff; z-index: 4; pointer-events: none; }
+.hero-photo-box { position: relative; aspect-ratio: 16 / 11; border-radius: var(--r-xl); background: radial-gradient(circle at 50% 30%, rgba(42,24,38,.55), rgba(18,10,22,.78)); border: 1px solid rgba(255,255,255,.2); box-shadow: 0 40px 80px -20px rgba(0,0,0,.7), inset 0 1px 0 rgba(255,255,255,.25); backdrop-filter: blur(6px); overflow: hidden; width: 100%; contain: layout paint; }
+.hero-photo-box img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; transition: opacity .45s ease-in-out; display: block; }
+.hero-dots { position: absolute; left: 50%; bottom: 14px; transform: translateX(-50%); display: flex; gap: 8px; align-items: center; padding: 6px 14px; border-radius: 999px; background: rgba(14,10,20,.58); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,.18); z-index: 5; }
+.hero-dot { width: 8px; height: 8px; border-radius: 999px; background: rgba(255,255,255,.45); border: none; padding: 0; cursor: pointer; transition: all .25s ease; }
+.hero-dot:hover { background: rgba(255,255,255,.9); transform: scale(1.2); }
+.hero-dot.active { width: 22px; background: var(--accent); box-shadow: 0 0 10px rgba(201,162,75,.6); }
 .hero-nav-btn { position: absolute; top: 50%; transform: translateY(-50%); width: 38px; height: 38px; border-radius: 50%; background: rgba(0,0,0,.5); border: 1px solid rgba(255,255,255,.25); color: #fff; font-size: 1.3rem; display: grid; place-items: center; cursor: pointer; z-index: 5; transition: all .2s; opacity: 0; }
 .hero-photo-box:hover .hero-nav-btn { opacity: 1; }
 .hero-nav-btn:hover { background: var(--accent); color: #1a1622; border-color: var(--accent); transform: translateY(-50%) scale(1.08); }
 .hero-nav-btn.prev { left: 12px; } .hero-nav-btn.next { right: 12px; }
 .hero-progress { position: absolute; left: 0; bottom: 0; height: 3px; background: var(--accent); z-index: 6; width: 0%; }
-.hero-photo-box .layout-chips { position: absolute; left: 16px; right: 16px; bottom: 14px; display: flex; gap: 8px; overflow-x: auto; padding: 4px 0; z-index: 4; scrollbar-width: none; -webkit-overflow-scrolling: touch; }
-.hero-photo-box .layout-chips::-webkit-scrollbar { display: none; }
-.hero-photo-box .layout-chips .chip { background: rgba(14,10,20,.72); backdrop-filter: blur(8px); border: 1px solid rgba(255,255,255,.25); color: #fff; font-size: .78rem; padding: 6px 14px; white-space: nowrap; flex-shrink: 0; transition: all .2s; cursor: pointer; }
-.hero-photo-box .layout-chips .chip:hover { background: rgba(255,255,255,.2); border-color: rgba(255,255,255,.45); }
-.hero-photo-box .layout-chips .chip.active { background: var(--accent); border-color: var(--accent); color: #2a2110; font-weight: 700; box-shadow: 0 4px 14px rgba(201,162,75,.45); }
 
 .hero-3d { position: relative; aspect-ratio: 16 / 11; border-radius: var(--r-xl); background: radial-gradient(circle at 50% 30%, rgba(42,24,38,.55), rgba(18,10,22,.78)); border: 1px solid rgba(255,255,255,.2); box-shadow: 0 40px 80px -20px rgba(0,0,0,.7), inset 0 1px 0 rgba(255,255,255,.25); transform-style: preserve-3d; transition: transform .25s ease-out; backdrop-filter: blur(6px); overflow: hidden; }
 .hero-3d canvas { position: absolute; inset: 0; width: 100%; height: 100%; }

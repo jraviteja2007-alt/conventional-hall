@@ -67,14 +67,12 @@ export default async function home(ctx) {
         </div>
         <div class="hero-stage">
           <div class="hero-photo-box" id="hero-photo-box" role="region" aria-label="Convention Hall Spaces Preview">
-            <span class="tag" id="hero-tag">${heroSpaces[0].tag}</span>
-            <span class="slide-counter" id="hero-counter">1 / ${heroSpaces.length}</span>
             <img id="hero-img" src="${heroSpaces[0].img}" alt="${heroSpaces[0].name}" width="1600" height="1100" loading="eager" />
-            <button type="button" class="hero-nav-btn prev" id="hero-prev" aria-label="Previous space">&#8249;</button>
-            <button type="button" class="hero-nav-btn next" id="hero-next" aria-label="Next space">&#8250;</button>
+            <button type="button" class="hero-nav-btn prev" id="hero-prev" aria-label="Previous photo">&#8249;</button>
+            <button type="button" class="hero-nav-btn next" id="hero-next" aria-label="Next photo">&#8250;</button>
             <div class="hero-progress" id="hero-progress"></div>
-            <div class="layout-chips" id="space-chips" role="group" aria-label="Convention spaces">
-              ${heroSpaces.map((sp, i) => html`<button type="button" class="chip sm ${i ? '' : 'active'}" data-i="${i}" aria-pressed="${i === 0}">${sp.name}</button>`)}
+            <div class="hero-dots" id="hero-dots" role="tablist" aria-label="Slideshow pagination">
+              ${heroSpaces.map((_, i) => html`<button type="button" class="hero-dot ${i ? '' : 'active'}" data-i="${i}" aria-label="Photo ${i + 1}" role="tab" aria-selected="${i === 0}"></button>`)}
             </div>
           </div>
           <div class="hero-float f1" aria-hidden="true"><b>1,500+</b>guests, one roof</div>
@@ -154,10 +152,8 @@ export default async function home(ctx) {
   const INTERVAL_MS = 3800;
   const heroBox = $('#hero-photo-box', ctx.el);
   const heroImgEl = $('#hero-img', ctx.el);
-  const heroTagEl = $('#hero-tag', ctx.el);
-  const heroCounterEl = $('#hero-counter', ctx.el);
   const heroProgressBar = $('#hero-progress', ctx.el);
-  const chipsContainer = $('#space-chips', ctx.el);
+  const dotsContainer = $('#hero-dots', ctx.el);
 
   // Preload all space images in browser cache for instantaneous transitions
   heroSpaces.forEach((s) => {
@@ -165,20 +161,17 @@ export default async function home(ctx) {
     im.src = s.img;
   });
 
-  function setSpace(idx, manual = false) {
+  function setSpace(idx) {
     curIndex = (idx + heroSpaces.length) % heroSpaces.length;
     const item = heroSpaces[curIndex];
     if (!item) return;
 
-    // Update chips active state and auto-scroll into view
-    const chips = $$('#space-chips .chip', ctx.el);
-    chips.forEach((c, i) => {
+    // Update active dot without any scroll or layout shift
+    const dots = $$('#hero-dots .hero-dot', ctx.el);
+    dots.forEach((d, i) => {
       const active = i === curIndex;
-      c.classList.toggle('active', active);
-      c.setAttribute('aria-pressed', String(active));
-      if (active) {
-        c.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
-      }
+      d.classList.toggle('active', active);
+      d.setAttribute('aria-selected', String(active));
     });
 
     // Cross-fade image smoothly
@@ -189,18 +182,6 @@ export default async function home(ctx) {
         heroImgEl.alt = item.name;
         heroImgEl.style.opacity = '1';
       }, 70);
-    }
-
-    if (heroTagEl) {
-      heroTagEl.style.opacity = '0.4';
-      setTimeout(() => {
-        heroTagEl.textContent = item.tag;
-        heroTagEl.style.opacity = '1';
-      }, 70);
-    }
-
-    if (heroCounterEl) {
-      heroCounterEl.textContent = `${curIndex + 1} / ${heroSpaces.length}`;
     }
 
     resetAutoPlay();
@@ -224,21 +205,21 @@ export default async function home(ctx) {
     }, INTERVAL_MS);
   }
 
-  // Click on chips
-  chipsContainer?.addEventListener('click', (e) => {
+  // Click on dots
+  dotsContainer?.addEventListener('click', (e) => {
     const b = e.target.closest('[data-i]');
     if (!b) return;
-    setSpace(Number(b.dataset.i), true);
+    setSpace(Number(b.dataset.i));
   });
 
   // Prev / Next arrow buttons
   $('#hero-prev', ctx.el)?.addEventListener('click', (e) => {
     e.stopPropagation();
-    setSpace(curIndex - 1, true);
+    setSpace(curIndex - 1);
   });
   $('#hero-next', ctx.el)?.addEventListener('click', (e) => {
     e.stopPropagation();
-    setSpace(curIndex + 1, true);
+    setSpace(curIndex + 1);
   });
 
   // Pause on hover, resume on leave
@@ -258,7 +239,7 @@ export default async function home(ctx) {
   heroBox?.addEventListener('touchend', (e) => {
     const diff = e.changedTouches[0].screenX - touchStartX;
     if (Math.abs(diff) > 40) {
-      setSpace(diff > 0 ? curIndex - 1 : curIndex + 1, true);
+      setSpace(diff > 0 ? curIndex - 1 : curIndex + 1);
     }
   }, { passive: true });
 
