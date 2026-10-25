@@ -133,7 +133,86 @@ export function adminRoutes(app) {
   }
 
   /* ---------- dashboard & analytics ---------- */
-  app.get(`${A}/dashboard`, staff, (req, res) => res.json({ stats: dashboard(), analytics: analytics(), unread: get(`SELECT COUNT(*) n FROM notifications WHERE audience='admin' AND is_read=0`).n }));
+  app.get(`${A}/dashboard`, staff, (req, res) => {
+    const s = dashboard();
+    const a = analytics();
+    const unread = get(`SELECT COUNT(*) n FROM notifications WHERE audience='admin' AND is_read=0`).n;
+    const revMonth = get(`SELECT COALESCE(SUM(amount),0) n FROM payments WHERE status='paid' AND kind<>'refund' AND substr(paid_at,1,7)=strftime('%Y-%m','now')`).n;
+    const upcoming = all(`
+      SELECT b.ref, b.status, b.customer_name, h.name hall, b.event_date, b.start_time, b.guests 
+      FROM bookings b 
+      JOIN halls h ON h.id = b.hall_id 
+      WHERE b.event_date >= date('now') AND b.status IN ('confirmed','reserved','pending') 
+      ORDER BY b.event_date ASC, b.start_time ASC 
+      LIMIT 8
+    `);
+
+    res.json({
+      // Keep nested stats & analytics for backwards compatibility and test assertions
+      stats: s,
+      analytics: a,
+      unread,
+
+      // Top-level fields consumed by public/js/admin/views/dashboard.js
+      total_bookings: s.total_bookings,
+      pending_requests: s.pending_bookings,
+      todays_events: s.todays_events,
+      upcoming_events: s.upcoming_events,
+      pending_enquiries: s.new_enquiries,
+      revenue: s.revenue,
+      revenue_month: revMonth,
+      pending_payments: s.pending_payments,
+      available_halls: s.halls_free_today,
+      halls_total: s.halls_active,
+      pending_reviews: s.pending_reviews,
+      pending_refunds: s.pending_refunds,
+
+      monthly: (s.revenue_by_month || []).map((r) => ({ m: r.month, v: r.amount })),
+      byStatus: (s.by_status || []).map((r) => ({ status: r.status, c: r.count })),
+      byEvent: (s.by_event || []).map((r) => ({ name: r.name, c: r.count })),
+      enquiries: (s.enquiries_by_status || []).map((r) => ({ status: r.status, c: r.count })),
+      payStatus: (s.payment_status || []).map((r) => ({ label: r.status, value: r.amount })),
+      upcoming,
+    });
+  });
+
+  app.get(`${A}/analytics`, staff, (req, res) => {
+    const from = req.query.from || '2000-01-01';
+    const to = req.query.to || '2099-12-31';
+    const n = (sql, ...p) => get(sql, ...p).n;
+
+    const requests = n('SELECT COUNT(*) n FROM bookings WHERE substr(created_at,1,10) BETWEEN ? AND ?', from, to);
+    const confirmed = n(`SELECT COUNT(*) n FROM bookings WHERE status IN ('confirmed','completed') AND substr(created_at,1,10) BETWEEN ? AND ?`, from, to);
+    const enq = n('SELECT COUNT(*) n FROM enquiries WHERE substr(created_at,1,10) BETWEEN ? AND ?', from, to);
+    const conv = n(`SELECT COUNT(*) n FROM enquiries WHERE status='converted' AND substr(created_at,1,10) BETWEEN ? AND ?`, from, to);
+    const revBooked = n(`SELECT COALESCE(SUM(paid_amount - refunded_amount),0) n FROM bookings WHERE substr(created_at,1,10) BETWEEN ? AND ?`, from, to);
+    const avgVal = Math.round(n(`SELECT COALESCE(AVG(total),0) n FROM bookings WHERE status IN ('confirmed','completed') AND substr(created_at,1,10) BETWEEN ? AND ?`, from, to));
+
+    const ev = Object.fromEntries(all(`SELECT type, COUNT(*) c FROM analytics_events WHERE substr(created_at,1,10) BETWEEN ? AND ? GROUP BY type`, from, to).map((r) => [r.type, r.c]));
+
+    const popEvent = get(`SELECT COALESCE(e.name,'Other') name, COUNT(*) c FROM bookings b LEFT JOIN event_types e ON e.id=b.event_type_id WHERE b.status IN ('confirmed','completed') AND substr(b.created_at,1,10) BETWEEN ? AND ? GROUP BY 1 ORDER BY 2 DESC LIMIT 1`, from, to);
+    const popPkg = get(`SELECT p.name, COUNT(*) c FROM bookings b JOIN packages p ON p.id=b.package_id WHERE b.status IN ('confirmed','completed') AND substr(b.created_at,1,10) BETWEEN ? AND ? GROUP BY 1 ORDER BY 2 DESC LIMIT 1`, from, to);
+
+    res.json({
+      bookingsCreated: requests,
+      bookingsWon: confirmed,
+      conversionRate: requests ? Math.round((confirmed / requests) * 1000) / 10 : 0,
+      revenueBooked: revBooked,
+      avgBookingValue: avgVal,
+      tracking: {
+        bookNowClicks: ev.book_click || 0,
+        availabilityChecks: ev.assistant || 0,
+        enquiryForms: ev.enquiry || 0,
+        calls: ev.call_click || 0,
+        whatsapp: ev.whatsapp_click || 0,
+      },
+      enquiries: enq,
+      enquiriesConverted: conv,
+      popularEvent: popEvent ? { name: popEvent.name, c: popEvent.c } : null,
+      popularPackage: popPkg ? { name: popPkg.name, c: popPkg.c } : null,
+    });
+  });
+
   app.get(`${A}/ai/summary`, manager, (req, res) => res.json(aiSummary()));
   app.get(`${A}/notifications`, staff, (req, res) => res.json({ notifications: all(`SELECT * FROM notifications WHERE audience='admin' ORDER BY id DESC LIMIT 60`) }));
   app.post(`${A}/notifications/read`, staff, (req, res) => { run(`UPDATE notifications SET is_read=1 WHERE audience='admin'`); res.json({ ok: true }); });
