@@ -20,13 +20,17 @@ export default async function reports({ el, query }) {
     const my = ++seq; $('#gw', el).hidden = !['revenue', 'bookings'].includes(st.name); setHTML(body, html`<div class="skeleton sk-block"></div>`);
     try {
       const r = await A.get(`/api/admin/reports/${st.name}${params()}`); if (my !== seq) return;
-      const cols = r.columns; const rows = r.rows; const m = r.meta || {};
+      const rows = r.rows || [];
+      const cols = (r.columns && r.columns.length) ? r.columns : (rows[0] ? Object.keys(rows[0]) : []);
+      const m = r.meta || {};
       const summary = st.name === 'revenue' && m.totals ? kv([['Gross', money(m.totals.gross)], ['Refunded', money(m.totals.refunded)], ['Net revenue', money(m.totals.net)]])
         : st.name === 'customers' && m.totals ? kv([['Customers', num(m.totals.customers)], ['Paying', num(m.totals.paying)], ['New (30 days)', num(m.totals.new_30d)], ['Repeat customers', num(m.repeat)]])
         : st.name === 'payments' ? kv([['Paid', money(m.paid?.v)], ['Refunded', money(m.refunded?.v)], ['Pending balance', money(m.pending?.v)], ['Refunds awaiting', money(m.pendingRefunds?.v)]]) : '';
-      const chart = st.name === 'revenue' ? lineChart(rows.map((x) => ({ label: x.period, value: x.net })), { label: 'Net revenue' }) : ['events', 'packages'].includes(st.name) ? hbars(rows.map((x) => ({ label: x.name, value: x.bookings })), { label: 'Bookings' }) : st.name === 'bookings' ? lineChart(rows.map((x) => ({ label: x.period, value: x.total })), { fmt: num, label: 'Bookings', color: 'var(--s3)' }) : '';
-      setHTML(body, html`<h2 style="margin-bottom:12px">${REPORTS.find(([k]) => k === st.name)[1]} · ${st.from} → ${st.to}</h2>${summary}<div style="margin:18px 0">${chart}</div>
-        ${rows.length ? html`<div class="tbl-wrap"><table class="tbl"><thead><tr>${cols.map((c) => html`<th scope="col" class="${MONEY.has(c) || typeof rows[0][c] === 'number' ? 'right' : ''}">${LABEL[c] || cap(c)}</th>`)}</tr></thead><tbody>${rows.map((x) => html`<tr>${cols.map((c) => html`<td class="${MONEY.has(c) || typeof x[c] === 'number' ? 'right' : ''}">${fmtCell(c, x[c])}</td>`)}</tr>`)}</tbody></table></div>` : emptyBlock('No data for this period', 'Try widening the date range.')}`);
+      const chart = rows.length ? (st.name === 'revenue' ? lineChart(rows.map((x) => ({ label: x.period, value: x.net })), { label: 'Net revenue' }) : ['events', 'packages'].includes(st.name) ? hbars(rows.map((x) => ({ label: x.name, value: x.bookings })), { label: 'Bookings' }) : st.name === 'bookings' ? lineChart(rows.map((x) => ({ label: x.period, value: x.total })), { fmt: num, label: 'Bookings', color: 'var(--s3)' }) : '') : '';
+      const curReport = REPORTS.find(([k]) => k === st.name);
+      const reportTitle = curReport ? curReport[1] : cap(st.name);
+      setHTML(body, html`<h2 style="margin-bottom:12px">${reportTitle} · ${st.from} → ${st.to}</h2>${summary}${chart ? html`<div style="margin:18px 0">${chart}</div>` : ''}
+        ${rows.length && cols.length ? html`<div class="tbl-wrap"><table class="tbl"><thead><tr>${cols.map((c) => html`<th scope="col" class="${MONEY.has(c) || typeof rows[0][c] === 'number' ? 'right' : ''}">${LABEL[c] || cap(c)}</th>`)}</tr></thead><tbody>${rows.map((x) => html`<tr>${cols.map((c) => html`<td class="${MONEY.has(c) || typeof x[c] === 'number' ? 'right' : ''}">${fmtCell(c, x[c])}</td>`)}</tr>`)}</tbody></table></div>` : emptyBlock('No data for this period', 'Try widening the date range.')}`);
       bindChartTips(body);
     } catch (e) { if (e.status !== 401) { setHTML(body, errBlock(e.message)); $('[data-retry]', body)?.addEventListener('click', run); } }
   }

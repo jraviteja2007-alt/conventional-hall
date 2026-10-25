@@ -10,7 +10,7 @@ import { audit } from '../services/audit.js';
 import { allSettings, saveSettings, DEFAULTS } from '../services/settings.js';
 import { createBooking, getBooking, modifyBooking, transition } from '../services/bookings.js';
 import { recordOfflinePayment, processRefund } from '../services/payments.js';
-import { dashboard, report, analytics, aiSummary, toCsv } from '../services/reports.js';
+import { dashboard, report, detailedReport, analytics, aiSummary, toCsv } from '../services/reports.js';
 import { quotationPdf } from '../services/documents.js';
 import { bookingSchema, parseServices, checkUpload } from './account.js';
 import { setting } from '../services/settings.js';
@@ -380,10 +380,43 @@ export function adminRoutes(app) {
 
   /* ---------- reports, exports, audit ---------- */
   app.get(`${A}/reports/:type`, manager, (req, res) => {
-    const rows = report(req.params.type, { from: req.query.from, to: req.query.to, group: req.query.group });
-    if (!rows) throw notFound('Report');
-    if (req.query.format === 'csv') { audit(req, 'export', 'report', req.params.type); res.setHeader('Content-Disposition', `attachment; filename="${req.params.type}-report.csv"`); return res.send(toCsv(rows), 'text/csv; charset=utf-8'); }
-    res.json({ rows });
+    const rep = detailedReport(req.params.type, { from: req.query.from, to: req.query.to, group: req.query.group });
+    if (!rep) throw notFound('Report');
+    if (req.query.format === 'csv') {
+      audit(req, 'export', 'report', req.params.type);
+      res.setHeader('Content-Disposition', `attachment; filename="${req.params.type}-report.csv"`);
+      return res.send(toCsv(rep.rows), 'text/csv; charset=utf-8');
+    }
+    res.json(rep);
+  });
+
+  app.get(`${A}/export/:what`, manager, (req, res) => {
+    const rep = detailedReport(req.params.what, { from: req.query.from, to: req.query.to, group: req.query.group });
+    if (!rep) throw notFound('Report');
+    const fmt = req.query.format || 'csv';
+    const stamp = new Date().toISOString().slice(0, 10);
+    const title = `${req.params.what}-report-${stamp}`;
+    audit(req, 'export', 'report', req.params.what, { format: fmt, count: rep.rows.length });
+
+    if (fmt === 'xls') {
+      const cols = rep.columns;
+      const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><style>table,th,td{border:1px solid #ccc;border-collapse:collapse;padding:8px;}th{background:#6b1e2e;color:#fff;font-weight:bold;}</style></head><body><h2>${req.params.what.toUpperCase()} REPORT</h2><table><thead><tr>${cols.map((c) => `<th>${c}</th>`).join('')}</tr></thead><tbody>${rep.rows.map((r) => `<tr>${cols.map((c) => `<td>${r[c] ?? ''}</td>`).join('')}</tr>`).join('')}</tbody></table></body></html>`;
+      res.setHeader('Content-Type', 'application/vnd.ms-excel; charset=utf-8');
+      res.setHeader('Content-Disposition', `attachment; filename="${title}.xls"`);
+      return res.send(html);
+    }
+
+    if (fmt === 'pdf') {
+      const cols = rep.columns;
+      const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>${title}</title><style>body{font-family:system-ui,-apple-system,sans-serif;padding:32px;color:#1a1622;}table{width:100%;border-collapse:collapse;margin-top:20px;}th,td{border:1px solid #ddd;padding:10px;text-align:left;}th{background:#f4ecef;font-weight:700;}h1{margin:0;color:#6b1e2e;font-size:24px;}.sub{color:#666;font-size:14px;margin-top:4px;}</style></head><body onload="window.print()"><h1>CVR Convention Hall</h1><div class="sub">${req.params.what.toUpperCase()} REPORT · Date range: ${req.query.from || 'All'} to ${req.query.to || 'Present'}</div><table><thead><tr>${cols.map((c) => `<th>${c}</th>`).join('')}</tr></thead><tbody>${rep.rows.map((r) => `<tr>${cols.map((c) => `<td>${r[c] ?? ''}</td>`).join('')}</tr>`).join('')}</tbody></table></body></html>`;
+      res.setHeader('Content-Type', 'text/html; charset=utf-8');
+      return res.send(html);
+    }
+
+    // Default: CSV
+    res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+    res.setHeader('Content-Disposition', `attachment; filename="${title}.csv"`);
+    return res.send(toCsv(rep.rows), 'text/csv; charset=utf-8');
   });
   app.get(`${A}/audit`, superAdmin, (req, res) => {
     const { size, pg, offset } = page(req, 50, 200);

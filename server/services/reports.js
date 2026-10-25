@@ -36,18 +36,137 @@ export function dashboard() {
   };
 }
 
-export function report(type, { from, to, group = 'month' }) {
-  from ||= '2000-01-01'; to ||= '2999-12-31';
+export function detailedReport(type, { from = '2000-01-01', to = '2099-12-31', group = 'month' } = {}) {
+  from ||= '2000-01-01';
+  to ||= '2099-12-31';
   const g = { day: 10, month: 7, year: 4 }[group] || 7;
   switch (type) {
-    case 'revenue': return all(`SELECT substr(paid_at,1,${g}) period, COUNT(*) payments, SUM(CASE WHEN kind<>'refund' THEN amount ELSE 0 END) collected, SUM(CASE WHEN kind='refund' THEN amount ELSE 0 END) refunded FROM payments WHERE status IN ('paid','refunded') AND substr(paid_at,1,10) BETWEEN ? AND ? GROUP BY 1 ORDER BY 1`, from, to);
-    case 'bookings': return all(`SELECT substr(created_at,1,${g}) period, COUNT(*) requests, SUM(status IN ('confirmed','completed')) confirmed, SUM(status IN ('cancelled','rejected','expired')) lost, COALESCE(SUM(CASE WHEN status IN ('confirmed','completed') THEN total END),0) booked_value FROM bookings WHERE substr(created_at,1,10) BETWEEN ? AND ? GROUP BY 1 ORDER BY 1`, from, to);
-    case 'events': return all(`SELECT COALESCE(e.name, b.custom_event, 'Other') event_type, COUNT(*) bookings, COALESCE(SUM(b.total),0) value, ROUND(AVG(b.guests)) avg_guests FROM bookings b LEFT JOIN event_types e ON e.id=b.event_type_id WHERE b.status IN ('confirmed','completed') AND b.event_date BETWEEN ? AND ? GROUP BY 1 ORDER BY 2 DESC`, from, to);
-    case 'customers': return all(`SELECT u.name, u.email, u.phone, COUNT(b.id) bookings, COALESCE(SUM(b.paid_amount - b.refunded_amount),0) paid, MAX(b.event_date) last_event, u.created_at joined FROM users u LEFT JOIN bookings b ON b.user_id=u.id WHERE u.role='customer' GROUP BY u.id ORDER BY paid DESC`);
-    case 'payments': return all(`SELECT p.id, p.receipt_no, b.ref booking, b.customer_name, p.kind, p.provider, p.amount, p.status, p.paid_at, p.created_at FROM payments p JOIN bookings b ON b.id=p.booking_id WHERE substr(p.created_at,1,10) BETWEEN ? AND ? ORDER BY p.id DESC`, from, to);
-    case 'bookings_list': return all(`SELECT b.ref, b.status, b.customer_name, b.phone, b.email, h.name hall, COALESCE(e.name, b.custom_event) event, b.event_date, b.start_time, b.end_time, b.guests, b.total, b.paid_amount, b.refunded_amount, b.created_at FROM bookings b JOIN halls h ON h.id=b.hall_id LEFT JOIN event_types e ON e.id=b.event_type_id WHERE b.event_date BETWEEN ? AND ? ORDER BY b.event_date DESC`, from, to);
-    default: return null;
+    case 'revenue': {
+      const rows = all(`
+        SELECT substr(paid_at,1,${g}) as period,
+               COUNT(*) as payments,
+               COALESCE(SUM(CASE WHEN kind<>'refund' THEN amount ELSE 0 END), 0) as gross,
+               COALESCE(SUM(CASE WHEN kind='refund' THEN amount ELSE 0 END), 0) as refunded,
+               COALESCE(SUM(CASE WHEN kind<>'refund' THEN amount ELSE -amount END), 0) as net
+        FROM payments 
+        WHERE status IN ('paid','refunded') AND substr(paid_at,1,10) BETWEEN ? AND ? 
+        GROUP BY 1 ORDER BY 1
+      `, from, to);
+      const totals = {
+        gross: rows.reduce((a, r) => a + (r.gross || 0), 0),
+        refunded: rows.reduce((a, r) => a + (r.refunded || 0), 0),
+        net: rows.reduce((a, r) => a + (r.net || 0), 0),
+      };
+      return { columns: ['period', 'payments', 'gross', 'refunded', 'net'], rows, meta: { totals } };
+    }
+    case 'bookings': {
+      const rows = all(`
+        SELECT substr(created_at,1,${g}) as period,
+               COUNT(*) as total,
+               SUM(status IN ('confirmed','completed')) as confirmed,
+               SUM(status IN ('pending','reserved')) as pending,
+               SUM(status IN ('cancelled','rejected','expired')) as lost
+        FROM bookings 
+        WHERE substr(created_at,1,10) BETWEEN ? AND ? 
+        GROUP BY 1 ORDER BY 1
+      `, from, to);
+      return { columns: ['period', 'total', 'confirmed', 'pending', 'lost'], rows, meta: {} };
+    }
+    case 'events': {
+      const rows = all(`
+        SELECT COALESCE(e.name, b.custom_event, 'Other') as name,
+               COUNT(*) as bookings,
+               COALESCE(SUM(b.total), 0) as value,
+               ROUND(AVG(b.guests)) as avg_guests
+        FROM bookings b 
+        LEFT JOIN event_types e ON e.id = b.event_type_id 
+        WHERE b.status IN ('confirmed','completed') AND b.event_date BETWEEN ? AND ? 
+        GROUP BY 1 ORDER BY 2 DESC
+      `, from, to);
+      return { columns: ['name', 'bookings', 'value', 'avg_guests'], rows, meta: {} };
+    }
+    case 'packages': {
+      const rows = all(`
+        SELECT COALESCE(p.name, 'Custom / Hall Only') as name,
+               COUNT(*) as bookings,
+               COALESCE(SUM(b.total), 0) as value
+        FROM bookings b 
+        LEFT JOIN packages p ON p.id = b.package_id 
+        WHERE b.status IN ('confirmed','completed') AND b.event_date BETWEEN ? AND ? 
+        GROUP BY 1 ORDER BY 2 DESC
+      `, from, to);
+      return { columns: ['name', 'bookings', 'value'], rows, meta: {} };
+    }
+    case 'customers': {
+      const rows = all(`
+        SELECT u.name,
+               u.phone,
+               COUNT(b.id) as bookings,
+               COALESCE(SUM(b.paid_amount - b.refunded_amount), 0) as value
+        FROM users u 
+        LEFT JOIN bookings b ON b.user_id = u.id 
+        WHERE u.role = 'customer' 
+        GROUP BY u.id 
+        ORDER BY value DESC
+      `);
+      const totalCust = get(`SELECT COUNT(*) n FROM users WHERE role='customer'`).n;
+      const payingCust = get(`SELECT COUNT(DISTINCT user_id) n FROM bookings WHERE user_id IS NOT NULL AND status IN ('confirmed','completed')`).n;
+      const new30d = get(`SELECT COUNT(*) n FROM users WHERE role='customer' AND created_at >= date('now','-30 days')`).n;
+      const repeatCust = get(`SELECT COUNT(*) n FROM (SELECT user_id FROM bookings WHERE user_id IS NOT NULL AND status IN ('confirmed','completed') GROUP BY user_id HAVING COUNT(*) > 1)`).n;
+      return {
+        columns: ['name', 'phone', 'bookings', 'value'],
+        rows,
+        meta: {
+          totals: { customers: totalCust, paying: payingCust, new_30d: new30d },
+          repeat: repeatCust,
+        },
+      };
+    }
+    case 'payments': {
+      const rows = all(`
+        SELECT provider as method,
+               COUNT(*) as c,
+               SUM(amount) as v
+        FROM payments 
+        WHERE status = 'paid' AND kind <> 'refund' AND substr(created_at,1,10) BETWEEN ? AND ? 
+        GROUP BY 1 ORDER BY 3 DESC
+      `, from, to);
+      const paidVal = get(`SELECT COALESCE(SUM(amount), 0) n FROM payments WHERE status='paid' AND kind<>'refund' AND substr(created_at,1,10) BETWEEN ? AND ?`, from, to).n;
+      const refVal = get(`SELECT COALESCE(SUM(amount), 0) n FROM payments WHERE (status='refunded' OR kind='refund') AND substr(created_at,1,10) BETWEEN ? AND ?`, from, to).n;
+      const pendBal = get(`SELECT COALESCE(SUM(total - paid_amount + refunded_amount), 0) n FROM bookings WHERE status IN ('reserved','confirmed') AND event_date BETWEEN ? AND ?`, from, to).n;
+      const pendRef = get(`SELECT COALESCE(SUM(amount), 0) n FROM payments WHERE status='pending_refund'`).n;
+      return {
+        columns: ['method', 'c', 'v'],
+        rows,
+        meta: {
+          paid: { v: paidVal },
+          refunded: { v: refVal },
+          pending: { v: pendBal },
+          pendingRefunds: { v: pendRef },
+        },
+      };
+    }
+    case 'bookings_list': {
+      const rows = all(`
+        SELECT b.ref, b.status, b.customer_name, b.phone, b.email, h.name hall, 
+               COALESCE(e.name, b.custom_event) event, b.event_date, b.start_time, 
+               b.end_time, b.guests, b.total, b.paid_amount, b.refunded_amount, b.created_at 
+        FROM bookings b 
+        JOIN halls h ON h.id=b.hall_id 
+        LEFT JOIN event_types e ON e.id=b.event_type_id 
+        WHERE b.event_date BETWEEN ? AND ? 
+        ORDER BY b.event_date DESC
+      `, from, to);
+      return { columns: ['ref', 'status', 'customer_name', 'phone', 'hall', 'event', 'event_date', 'total', 'paid_amount'], rows, meta: {} };
+    }
+    default:
+      return null;
   }
+}
+
+export function report(type, { from, to, group = 'month' } = {}) {
+  const d = detailedReport(type, { from, to, group });
+  return d ? d.rows : null;
 }
 
 export function analytics() {
